@@ -1,4 +1,5 @@
-﻿import 'package:go_router/go_router.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import '../../auth/presentation/auth_viewmodel.dart';
 import '../../auth/presentation/login_screen.dart';
@@ -8,8 +9,11 @@ import '../domain/models/transaction_model.dart';
 import '../presentation/screens/category_summary_screen.dart';
 import '../presentation/screens/home_screen.dart';
 import '../presentation/screens/summary_chart_screen.dart';
+import '../presentation/screens/transaction_detail_screen.dart';
 import '../presentation/screens/transaction_form_screen.dart';
+import '../presentation/viewmodels/transaction_viewmodel.dart';
 
+/// Route Guard: every route except /login and /signup requires a session.
 GoRouter buildAppRouter(AuthViewModel authViewModel) {
   return GoRouter(
     refreshListenable: authViewModel,
@@ -33,7 +37,19 @@ GoRouter buildAppRouter(AuthViewModel authViewModel) {
       GoRoute(path: '/transactions/new', builder: (context, state) => const TransactionFormScreen()),
       GoRoute(
         path: '/transactions/:id',
-        builder: (context, state) => TransactionFormScreen(transaction: state.extra as TransactionModel?),
+        builder: (context, state) => TransactionDetailScreen(id: int.parse(state.pathParameters['id']!)),
+        routes: [
+          GoRoute(
+            path: 'edit',
+            builder: (context, state) {
+              final id = int.parse(state.pathParameters['id']!);
+              final transaction = state.extra as TransactionModel? ?? context.read<TransactionViewModel>().findById(id);
+              // Page was refreshed before the list loaded: show detail, which loads it.
+              if (transaction == null) return TransactionDetailScreen(id: id);
+              return TransactionFormScreen(transaction: transaction);
+            },
+          ),
+        ],
       ),
     ],
   );

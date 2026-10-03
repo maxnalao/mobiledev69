@@ -72,7 +72,7 @@ class CategorySummaryScreen extends StatelessWidget {
                       padding: const EdgeInsets.only(bottom: 8),
                       child: TransactionTile(
                         transaction: t,
-                        onTap: () => context.push('/transactions/${t.id}', extra: t),
+                        onTap: () => context.push('/transactions/${t.id}'),
                         onDelete: () => viewModel.remove(t.id!),
                       ),
                     ),

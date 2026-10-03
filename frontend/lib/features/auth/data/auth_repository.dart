@@ -1,28 +1,52 @@
-﻿import 'package:dio/dio.dart';
+import 'package:dio/dio.dart';
 
 import '../../../core/api/api_client.dart';
+import '../../../core/auth/oidc_service.dart';
 import '../../../core/auth/token_store.dart';
+import '../../../core/utils/result.dart';
 
+/// Repository for everything auth-related. The ViewModel talks only to this
+/// class; it hides OidcService/TokenStore/ApiClient and never throws.
 class AuthRepository {
-  final ApiClient apiClient;
+  final OidcService oidcService;
   final TokenStore tokenStore;
+  final ApiClient apiClient;
 
-  AuthRepository({required this.apiClient, required this.tokenStore});
+  AuthRepository({required this.oidcService, required this.tokenStore, required this.apiClient});
 
-  /// Returns null on success, or a Thai error message on failure.
-  Future<String?> login({required String username, required String password}) async {
+  Future<Result<void>> startLogin() async {
     try {
-      final response = await apiClient.dio.post('/login/', data: {'username': username, 'password': password});
-      final token = response.data['token'] as String;
-      await tokenStore.save(accessToken: token);
-      return null;
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 400) return 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';
-      return 'เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่';
+      await oidcService.login();
+      return const Ok(null);
+    } catch (_) {
+      return const Err('เชื่อมต่อ OIDC Server ไม่ได้ กรุณาตรวจสอบว่า backend ทำงานอยู่');
     }
   }
 
-  Future<String?> register({
+  Future<Result<void>> completeLoginIfRedirected() async {
+    try {
+      await oidcService.completeLoginIfRedirected();
+      return const Ok(null);
+    } on OidcException catch (e) {
+      return Err('เข้าสู่ระบบไม่สำเร็จ: ${e.message}');
+    } catch (_) {
+      return const Err('เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+    }
+  }
+
+  Future<bool> hasSession() => tokenStore.hasSession();
+
+  Future<String?> displayName() => tokenStore.readDisplayName();
+
+  Future<void> logout() async {
+    try {
+      await oidcService.logout();
+    } catch (_) {
+      // Local tokens are already cleared; nothing else to do offline.
+    }
+  }
+
+  Future<Result<void>> register({
     required String username,
     required String email,
     required String password,
@@ -35,16 +59,17 @@ class AuthRepository {
         'password': password,
         'password_confirm': passwordConfirm,
       });
-      return null;
+      return const Ok(null);
     } on DioException catch (e) {
       final data = e.response?.data;
       if (data is Map && data.isNotEmpty) {
         final firstKey = data.keys.first.toString();
         final firstError = data[data.keys.first];
         final message = firstError is List ? firstError.first.toString() : firstError.toString();
-        return '${_translateField(firstKey)}: $message';
+        return Err('${_translateField(firstKey)}: $message');
       }
-      return 'สมัครสมาชิกไม่สำเร็จ กรุณาลองใหม่';
+      if (e.response == null) return const Err('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาตรวจสอบอินเทอร์เน็ต');
+      return const Err('สมัครสมาชิกไม่สำเร็จ กรุณาลองใหม่');
     }
   }
 

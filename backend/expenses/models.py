@@ -1,4 +1,4 @@
-﻿from django.conf import settings
+from django.conf import settings
 from django.db import models
 import secrets
 
@@ -42,14 +42,7 @@ class Transaction(models.Model):
         return f"{self.kind} {self.amount} ({self.occurred_on})"
 
 
+
 def _generate_token_key() -> str:
+    # No longer used by any model; kept because migration 0002 references it.
     return secrets.token_hex(20)
-
-
-class AuthToken(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="auth_token")
-    key = models.CharField(max_length=64, unique=True, default=_generate_token_key)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self) -> str:
-        return f"Token for {self.user}"

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -27,12 +27,15 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final viewModel = context.watch<TransactionViewModel>();
     final themeViewModel = context.watch<ThemeViewModel>();
+    final authViewModel = context.watch<AuthViewModel>();
     final currency = NumberFormat.currency(locale: 'th_TH', symbol: '฿', decimalDigits: 0);
     final balance = viewModel.totalIncome - viewModel.totalExpense;
 
     if (viewModel.errorMessage != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || viewModel.errorMessage == null) return;
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(viewModel.errorMessage!)));
+        viewModel.clearError();
       });
     }
 
@@ -45,7 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
               pinned: true,
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               elevation: 0,
-              title: const Text('รายรับ-รายจ่าย'),
+              title: Text('สวัสดี, ${authViewModel.displayName ?? 'ผู้ใช้'}'),
               expandedHeight: 260,
               flexibleSpace: FlexibleSpaceBar(
                 background: Padding(
@@ -67,7 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   icon: Icon(themeViewModel.mode == ThemeMode.dark ? Icons.light_mode_outlined : Icons.dark_mode_outlined),
                   onPressed: () => themeViewModel.toggleDarkMode(themeViewModel.mode != ThemeMode.dark),
                 ),
-                IconButton(tooltip: 'ออกจากระบบ', icon: const Icon(Icons.logout_rounded), onPressed: () => context.read<AuthViewModel>().logout()),
+                IconButton(tooltip: 'ออกจากระบบ', icon: const Icon(Icons.logout_rounded), onPressed: authViewModel.logout),
               ],
             ),
             if (viewModel.isLoading)
@@ -84,7 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     final transaction = viewModel.transactions[index];
                     return TransactionTile(
                       transaction: transaction,
-                      onTap: () => context.push('/transactions/${transaction.id}', extra: transaction),
+                      onTap: () => context.push('/transactions/${transaction.id}'),
                       onDelete: () => viewModel.remove(transaction.id!),
                     );
                   },

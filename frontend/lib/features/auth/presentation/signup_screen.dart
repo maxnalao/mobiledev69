@@ -1,9 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../data/auth_repository.dart';
+import 'auth_viewmodel.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -18,41 +18,34 @@ class _SignupScreenState extends State<SignupScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
-  bool _isSaving = false;
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() => _isSaving = true);
 
-    try {
-      final repository = context.read<AuthRepository>();
-      final error = await repository.register(
-        username: _usernameController.text.trim(),
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-        passwordConfirm: _confirmController.text,
+    final viewModel = context.read<AuthViewModel>();
+    final success = await viewModel.register(
+      username: _usernameController.text.trim(),
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+      passwordConfirm: _confirmController.text,
+    );
+
+    if (!mounted) return;
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('สมัครสมาชิกสำเร็จ! กดเข้าสู่ระบบด้วย OIDC แล้วใช้บัญชีที่สร้างไว้')),
       );
-
-      if (!mounted) return;
-
-      if (error == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบด้วยบัญชีที่สร้างไว้')),
-        );
-        context.go('/login');
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('เกิดข้อผิดพลาด: $e')));
-    } finally {
-      if (mounted) setState(() => _isSaving = false);
+      context.go('/login');
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(viewModel.errorMessage ?? 'สมัครสมาชิกไม่สำเร็จ')));
+      viewModel.clearError();
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isSaving = context.watch<AuthViewModel>().isBusy;
+
     return Scaffold(
       appBar: AppBar(title: const Text('สมัครสมาชิก')),
       body: Form(
@@ -60,7 +53,7 @@ class _SignupScreenState extends State<SignupScreen> {
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            Icon(Icons.person_add_alt_1_rounded, size: 56, color: AppColors.jade),
+            const Icon(Icons.person_add_alt_1_rounded, size: 56, color: AppColors.jade),
             const SizedBox(height: 16),
             Text('สร้างบัญชีใหม่', style: Theme.of(context).textTheme.headlineSmall, textAlign: TextAlign.center),
             const SizedBox(height: 24),
@@ -100,8 +93,8 @@ class _SignupScreenState extends State<SignupScreen> {
             ),
             const SizedBox(height: 28),
             FilledButton(
-              onPressed: _isSaving ? null : _submit,
-              child: _isSaving
+              onPressed: isSaving ? null : _submit,
+              child: isSaving
                   ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                   : const Text('สมัครสมาชิก'),
             ),

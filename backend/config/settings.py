@@ -1,4 +1,4 @@
-﻿"""
+"""
 Django settings for the Expense Tracker course project backend.
 """
 from pathlib import Path
@@ -82,7 +82,6 @@ CORS_ALLOW_CREDENTIALS = True
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "expenses.authentication.OidcTokenAuthentication",
-        "expenses.authentication.BearerTokenAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
@@ -91,4 +90,7 @@ REST_FRAMEWORK = {
 }
 
 OIDC_USERINFO = "expenses.oidc.userinfo"
-LOGIN_URL = "/admin/login/"
+
+# Login page shown by the OIDC Server during the Authorization Code Flow.
+# (The admin login page rejects non-staff users, so we use our own.)
+LOGIN_URL = "/accounts/login/"

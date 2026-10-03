@@ -1,11 +1,9 @@
-﻿from django.contrib.auth import authenticate
 from django.db.models import Sum
-from rest_framework import generics, permissions, status, viewsets
+from rest_framework import generics, permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
-from .models import AuthToken, Category, Transaction
+from .models import Category, Transaction
 from .serializers import CategorySerializer, RegisterSerializer, TransactionSerializer
 
 
@@ -16,19 +14,6 @@ class RegisterView(generics.CreateAPIView):
     def get_queryset(self):
         from django.contrib.auth import get_user_model
         return get_user_model().objects.all()
-
-
-class LoginView(APIView):
-    permission_classes = [permissions.AllowAny]
-
-    def post(self, request):
-        username = request.data.get("username", "")
-        password = request.data.get("password", "")
-        user = authenticate(request, username=username, password=password)
-        if user is None:
-            return Response({"detail": "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง"}, status=status.HTTP_400_BAD_REQUEST)
-        token, _ = AuthToken.objects.get_or_create(user=user)
-        return Response({"token": token.key, "username": user.username})
 
 
 class CategoryViewSet(viewsets.ModelViewSet):

@@ -1,5 +1,6 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import 'core/api/api_client.dart';
@@ -15,31 +16,57 @@ import 'features/expense/presentation/viewmodels/category_viewmodel.dart';
 import 'features/expense/presentation/viewmodels/transaction_viewmodel.dart';
 import 'features/expense/router/app_router.dart';
 
-class App extends StatelessWidget {
+class App extends StatefulWidget {
   const App({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final tokenStore = TokenStore();
-    final apiClient = ApiClient(tokenStore: tokenStore);
-    final oidcService = OidcService(tokenStore: tokenStore);
+  State<App> createState() => _AppState();
+}
 
+class _AppState extends State<App> {
+  // Services and the router are created once for the app's lifetime.
+  late final TokenStore _tokenStore = TokenStore();
+  late final ApiClient _apiClient = ApiClient(tokenStore: _tokenStore);
+  late final AuthViewModel _authViewModel = AuthViewModel(
+    repository: AuthRepository(
+      oidcService: OidcService(tokenStore: _tokenStore),
+      tokenStore: _tokenStore,
+      apiClient: _apiClient,
+    ),
+  );
+  late final GoRouter _router = buildAppRouter(_authViewModel);
+
+  @override
+  void initState() {
+    super.initState();
+    _apiClient.onUnauthorized = _authViewModel.handleSessionExpired;
+  }
+
+  @override
+  void dispose() {
+    _authViewModel.dispose();
+    _router.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        Provider<ApiClient>(create: (_) => apiClient),
-        Provider<AuthRepository>(create: (_) => AuthRepository(apiClient: apiClient, tokenStore: tokenStore)),
+        Provider<ApiClient>.value(value: _apiClient),
         ChangeNotifierProvider(create: (_) => ThemeViewModel()),
-        ChangeNotifierProvider(create: (_) => AuthViewModel(oidcService: oidcService, tokenStore: tokenStore)),
-        ChangeNotifierProvider(create: (_) => TransactionViewModel(repository: TransactionRepository(apiClient: apiClient))),
-        ChangeNotifierProvider(create: (_) => CategoryViewModel(repository: CategoryRepository(apiClient: apiClient))),
+        ChangeNotifierProvider.value(value: _authViewModel),
+        ChangeNotifierProvider(create: (_) => TransactionViewModel(repository: TransactionRepository(apiClient: _apiClient))),
+        ChangeNotifierProvider(create: (_) => CategoryViewModel(repository: CategoryRepository(apiClient: _apiClient))),
       ],
       child: Builder(
         builder: (context) {
-          final authViewModel = context.watch<AuthViewModel>();
+          final authStatus = context.select<AuthViewModel, AuthStatus>((vm) => vm.status);
           final themeViewModel = context.watch<ThemeViewModel>();
 
-          if (authViewModel.status == AuthStatus.unknown) {
+          if (authStatus == AuthStatus.unknown) {
             return MaterialApp(
+              debugShowCheckedModeBanner: false,
               theme: AppTheme.light,
               darkTheme: AppTheme.dark,
               themeMode: themeViewModel.mode,
@@ -60,7 +87,7 @@ class App extends StatelessWidget {
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
             ],
-            routerConfig: buildAppRouter(authViewModel),
+            routerConfig: _router,
           );
         },
       ),

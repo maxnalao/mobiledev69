@@ -1,9 +1,10 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/models/transaction_kind.dart';
 import '../../domain/models/transaction_model.dart';
+import 'confirm_delete_dialog.dart';
 
 class TransactionTile extends StatelessWidget {
   final TransactionModel transaction;
@@ -27,6 +28,7 @@ class TransactionTile extends StatelessWidget {
         decoration: BoxDecoration(color: AppColors.clay, borderRadius: BorderRadius.circular(16)),
         child: const Icon(Icons.delete_outline_rounded, color: Colors.white),
       ),
+      confirmDismiss: (_) => showConfirmDeleteDialog(context),
       onDismissed: (_) => onDelete(),
       child: Card(
         margin: EdgeInsets.zero,
