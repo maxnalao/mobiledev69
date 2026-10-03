@@ -1,0 +1,14 @@
+﻿[project]
+name = "expense-tracker-backend"
+version = "0.1.0"
+description = "Django + django-oidc-provider backend for the Expense Tracker course project"
+requires-python = ">=3.11"
+dependencies = [
+    "django>=5.0,<6.0",
+    "django-oidc-provider>=0.8.3",
+    "djangorestframework>=3.15",
+    "django-cors-headers>=4.4",
+]
+
+[tool.uv]
+package = false
