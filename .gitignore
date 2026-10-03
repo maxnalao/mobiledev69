@@ -1,0 +1,38 @@
+﻿# ===== Python / Django / uv =====
+.venv/
+**/.venv/
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.db
+backend/staticfiles/
+backend/media/
+
+# ===== Flutter / Dart =====
+**/.dart_tool/
+**/build/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.packages
+**/ios/Flutter/.last_build_id
+**/doc/api/
+
+# ===== IDE =====
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/settings.json
+
+# ===== Secrets =====
+.env
+*.pem
+*.key
+*.jks
+**/google-services.json
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+*.log
+*.swp

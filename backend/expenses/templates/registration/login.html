@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>เข้าสู่ระบบ — Expense Tracker OIDC</title>
+  <style>
+    body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+           font-family: system-ui, "Noto Sans Thai", sans-serif; background: #f2f5f3; color: #1d2b25; }
+    .card { width: 100%; max-width: 360px; background: #fff; border-radius: 20px; padding: 32px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, .08); }
+    h1 { font-size: 22px; margin: 0 0 4px; }
+    p.sub { margin: 0 0 24px; color: #5b6b64; font-size: 14px; }
+    label { display: block; font-size: 14px; margin: 16px 0 6px; }
+    input { width: 100%; box-sizing: border-box; padding: 12px; border: 1px solid #cfd8d3; border-radius: 12px; font-size: 15px; }
+    button { width: 100%; margin-top: 24px; padding: 12px; border: 0; border-radius: 12px;
+             background: #2f7d62; color: #fff; font-size: 16px; cursor: pointer; }
+    .error { background: #fdecea; color: #b3261e; padding: 10px 12px; border-radius: 10px; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <form class="card" method="post">
+    {% csrf_token %}
+    <h1>🔐 OIDC Server</h1>
+    <p class="sub">เข้าสู่ระบบเพื่อใช้งานแอปบันทึกรายรับ-รายจ่าย</p>
+    {% if form.errors %}
+      <div class="error">ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง</div>
+    {% endif %}
+    <label for="id_username">ชื่อผู้ใช้</label>
+    <input type="text" name="username" id="id_username" autofocus required>
+    <label for="id_password">รหัสผ่าน</label>
+    <input type="password" name="password" id="id_password" required>
+    <input type="hidden" name="next" value="{{ next }}">
+    <button type="submit">เข้าสู่ระบบ</button>
+  </form>
+</body>
+</html>
