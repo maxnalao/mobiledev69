@@ -101,9 +101,9 @@ frontend/lib/
 
 ## 🖼️ Screenshots
 
-| หน้า Login | หน้ารายการ |
-| --- | --- |
-| ![Login](docs/screenshots/login.png) | ![Home](docs/screenshots/home.png) |
+| หน้า Login (OIDC) | หน้ารายการ | สรุปภาพรวม | รายจ่ายตามหมวดหมู่ |
+| :---: | :---: | :---: | :---: |
+| <img src="docs/screenshots/login.jpg" width="200" alt="หน้า Login"> | <img src="docs/screenshots/home.jpg" width="200" alt="หน้ารายการ"> | <img src="docs/screenshots/summary.jpg" width="200" alt="สรุปภาพรวม"> | <img src="docs/screenshots/category.jpg" width="200" alt="รายจ่ายตามหมวดหมู่"> |
 
 ## 🎬 Demo Video
 

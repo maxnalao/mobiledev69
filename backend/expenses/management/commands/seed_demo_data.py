@@ -64,28 +64,53 @@ class Command(BaseCommand):
         return user
 
     def _ensure_sample_data(self, user):
-        food, _ = Category.objects.get_or_create(
-            owner=user, name="อาหาร", kind=Category.Kind.EXPENSE,
-            defaults={"icon": "restaurant", "color_hex": "#EF6C00"},
-        )
-        salary, _ = Category.objects.get_or_create(
-            owner=user, name="เงินเดือน", kind=Category.Kind.INCOME,
-            defaults={"icon": "work", "color_hex": "#2E7D32"},
-        )
+        expense_categories = {
+            "อาหาร": ("restaurant", "#EF6C00"),
+            "เดินทาง": ("directions_bus", "#1565C0"),
+            "ช้อปปิ้ง": ("shopping_bag", "#6A1B9A"),
+            "ที่พัก": ("home", "#5D4037"),
+        }
+        income_categories = {
+            "เงินเดือน": ("work", "#2E7D32"),
+            "งานพิเศษ": ("savings", "#00897B"),
+        }
+        categories = {}
+        for kind, group in ((Category.Kind.EXPENSE, expense_categories), (Category.Kind.INCOME, income_categories)):
+            for name, (icon, color) in group.items():
+                categories[name], _ = Category.objects.get_or_create(
+                    owner=user, name=name, kind=kind, defaults={"icon": icon, "color_hex": color}
+                )
 
-        Transaction.objects.get_or_create(
-            owner=user,
-            kind=Transaction.Kind.EXPENSE,
-            amount=120,
-            category=food,
-            occurred_on=date.today(),
-            defaults={"note": "ข้าวกลางวัน"},
-        )
-        Transaction.objects.get_or_create(
-            owner=user,
-            kind=Transaction.Kind.INCOME,
-            amount=15000,
-            category=salary,
-            occurred_on=date.today(),
-            defaults={"note": "เงินเดือนประจำเดือน"},
-        )
+        today = date.today()
+        income, expense = Transaction.Kind.INCOME, Transaction.Kind.EXPENSE
+        # (months ago, day of month or None for today, kind, amount, category, note)
+        samples = [
+            (0, None, income, 15000, "เงินเดือน", "เงินเดือนประจำเดือน"),
+            (0, None, expense, 120, "อาหาร", "ข้าวกลางวัน"),
+            (0, 1, expense, 3500, "ที่พัก", "ค่าหอพัก"),
+            (0, 1, expense, 85, "อาหาร", "กาแฟ"),
+            (1, 1, income, 15000, "เงินเดือน", "เงินเดือนประจำเดือน"),
+            (1, 2, expense, 3500, "ที่พัก", "ค่าหอพัก"),
+            (1, 8, expense, 1450, "อาหาร", "ค่าอาหารทั้งสัปดาห์"),
+            (1, 12, expense, 600, "เดินทาง", "เติมน้ำมัน"),
+            (1, 18, income, 2500, "งานพิเศษ", "รับออกแบบโปสเตอร์"),
+            (1, 22, expense, 1290, "ช้อปปิ้ง", "รองเท้าผ้าใบ"),
+            (2, 1, income, 15000, "เงินเดือน", "เงินเดือนประจำเดือน"),
+            (2, 2, expense, 3500, "ที่พัก", "ค่าหอพัก"),
+            (2, 10, expense, 1800, "อาหาร", "ค่าอาหารทั้งสัปดาห์"),
+            (2, 15, expense, 450, "เดินทาง", "ค่ารถไฟฟ้า"),
+            (2, 25, expense, 2390, "ช้อปปิ้ง", "หูฟังบลูทูธ"),
+        ]
+        for months_ago, day, kind, amount, category, note in samples:
+            year, month = today.year, today.month - months_ago
+            while month < 1:
+                year, month = year - 1, month + 12
+            occurred_on = today if day is None else date(year, month, min(day, today.day) if months_ago == 0 else day)
+            Transaction.objects.get_or_create(
+                owner=user,
+                kind=kind,
+                amount=amount,
+                category=categories[category],
+                occurred_on=occurred_on,
+                defaults={"note": note},
+            )
