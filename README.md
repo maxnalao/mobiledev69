@@ -107,4 +107,4 @@ frontend/lib/
 
 ## 🎬 Demo Video
 
-_(ใส่ลิงก์ YouTube แบบ Unlisted ที่นี่)_
+(https://youtu.be/nSCThmBi_DY?si=MWT1V4hMb09b0fIc)
